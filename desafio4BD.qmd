@@ -1,0 +1,151 @@
+---
+title: "desafio 4 BD"
+author: "238719 e 223562"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(leaflet)
+library(sf)
+
+analisar_trajetos_melhorado <- function(tail_number, 
+                                       caminho_flights = "~/archive (1)/flights.csv",
+                                       caminho_airports = "~/archive (1)/airports.csv") {
+  
+  # 1. Ler e processar dados dos voos
+  dados_voos <- read_csv(caminho_flights) %>%
+    filter(TAIL_NUMBER == tail_number) %>%
+    arrange(YEAR, MONTH, DAY, DEPARTURE_TIME) %>%
+    mutate(
+      DATA = make_date(YEAR, MONTH, DAY),
+      SEQUENCIA = row_number()  # Para ordem temporal
+    )
+  
+  if (nrow(dados_voos) == 0) {
+    stop("Nenhum voo encontrado para a aeronave: ", tail_number)
+  }
+  
+  # 2. Ler dados dos aeroportos
+  dados_aeroportos <- read_csv(caminho_airports) %>%
+    select(IATA_CODE, LATITUDE, LONGITUDE, AIRPORT, CITY, STATE)
+  
+  # 3. Criar sequência completa de aeroportos visitados
+  aeroportos_visitados <- unique(c(
+    dados_voos$ORIGIN_AIRPORT, 
+    dados_voos$DESTINATION_AIRPORT
+  ))
+  
+  # 4. Obter coordenadas dos aeroportos visitados
+  coordenadas <- dados_aeroportos %>%
+    filter(IATA_CODE %in% aeroportos_visitados) %>%
+    rename(AEROPORTO = IATA_CODE)
+  
+  # 5. Criar dados para as rotas
+  rotas <- dados_voos %>%
+    select(ORIGIN_AIRPORT, DESTINATION_AIRPORT, SEQUENCIA, 
+           AIR_TIME, DISTANCE, DEPARTURE_TIME, ARRIVAL_TIME) %>%
+    left_join(coordenadas, by = c("ORIGIN_AIRPORT" = "AEROPORTO")) %>%
+    rename(LAT_ORIG = LATITUDE, LON_ORIG = LONGITUDE) %>%
+    left_join(coordenadas, by = c("DESTINATION_AIRPORT" = "AEROPORTO")) %>%
+    rename(LAT_DEST = LATITUDE, LON_DEST = LONGITUDE) %>%
+    mutate(
+      VELOCIDADE_MEDIA = DISTANCE / (AIR_TIME/60),  # mph
+      ESPESSURA = scales::rescale(VELOCIDADE_MEDIA, to = c(1, 8))
+    )
+  
+  # 6. Criar mapa interativo
+  mapa <- leaflet() %>%
+    addTiles() %>%
+    addProviderTiles(providers$CartoDB.Positron)  # Mapa mais limpo
+  
+  # 7. Adicionar marcadores dos aeroportos
+  mapa <- mapa %>%
+    addCircleMarkers(
+      data = coordenadas,
+      lng = ~LONGITUDE, 
+      lat = ~LATITUDE,
+      radius = 6,
+      color = "#E41A1C",
+      fillColor = "#FF7F00",
+      fillOpacity = 0.8,
+      weight = 2,
+      popup = ~paste("<b>", AEROPORTO, "</b><br>",
+                    AIRPORT, "<br>",
+                    CITY, ", ", STATE),
+      label = ~AEROPORTO
+    )
+  
+  # 8. Adicionar rotas com cores sequenciais
+  cores <- colorRampPalette(c("blue", "green", "orange", "red"))(nrow(rotas))
+  
+  for (i in 1:nrow(rotas)) {
+    mapa <- mapa %>%
+      addPolylines(
+        lng = c(rotas$LON_ORIG[i], rotas$LON_DEST[i]),
+        lat = c(rotas$LAT_ORIG[i], rotas$LAT_DEST[i]),
+        weight = rotas$ESPESSURA[i],
+        color = cores[i],
+        opacity = 0.8,
+        popup = paste(
+          "<b>Voo ", i, "</b><br>",
+          "De: ", rotas$ORIGIN_AIRPORT[i], " → Para: ", rotas$DESTINATION_AIRPORT[i], "<br>",
+          "Distância: ", rotas$DISTANCE[i], " milhas<br>",
+          "Tempo de voo: ", rotas$AIR_TIME[i], " min<br>",
+          "Velocidade média: ", round(rotas$VELOCIDADE_MEDIA[i], 1), " mph"
+        )
+      )
+  }
+  
+  # 9. Adicionar controles e legenda
+  mapa <- mapa %>%
+    addLegend(
+      position = "bottomright",
+      colors = c("blue", "green", "orange", "red"),
+      labels = c("Primeiros voos", "", "", "Últimos voos"),
+      title = "Sequência Temporal"
+    ) %>%
+    addControl(
+      paste("Trajeto da aeronave:", tail_number, "<br>",
+            "Total de voos:", nrow(dados_voos), "<br>",
+            "Aeroportos visitados:", length(aeroportos_visitados)),
+      position = "topright"
+    )
+  
+  # 10. Tabela tidy com estatísticas
+  tabela_tidy <- dados_voos %>%
+    select(TAIL_NUMBER, AIRLINE, FLIGHT_NUMBER, 
+           ORIGIN_AIRPORT, DESTINATION_AIRPORT,
+           YEAR, MONTH, DAY, DEPARTURE_TIME, ARRIVAL_TIME,
+           AIR_TIME, DISTANCE, DATA) %>%
+    arrange(DATA, DEPARTURE_TIME)
+  
+  # Estatísticas resumidas
+  estatisticas <- dados_voos %>%
+    summarise(
+      Total_Voos = n(),
+      Aeroportos_Unicos = length(aeroportos_visitados),
+      Distancia_Total = sum(DISTANCE, na.rm = TRUE),
+      Distancia_Media = mean(DISTANCE, na.rm = TRUE),
+      Velocidade_Media_Geral = mean(DISTANCE / (AIR_TIME/60), na.rm = TRUE)
+    )
+  
+  return(list(
+    tabela_tidy = tabela_tidy,
+    mapa = mapa,
+    estatisticas = estatisticas,
+    dados_completos = dados_voos,
+    rotas = rotas
+  ))
+}
+
+# USO DA FUNÇÃO
+resultado <- analisar_trajetos_melhorado("N431WN")  # Use um tail_number real
+
+# Visualizar resultados
+print(resultado$tabela_tidy)
+print(resultado$estatisticas)
+resultado$mapa
+```

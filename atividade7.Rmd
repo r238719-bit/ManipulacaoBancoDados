@@ -1,0 +1,36 @@
+---
+title: "atividade 7"
+author: "Rafael"
+date: "2024-04-25"
+output: html_document
+---
+
+```{r}
+library(tibble)
+library(tidyr)
+library(reshape2)
+```
+atividade 1:
+```{r}
+player <- c("James", "Durant", "Curry", "Harden", "Paul", "Wade")
+team <- c("CLEOH", "GSWCA", "GSWCA", "HOUTX", "HOUTX", "CLEOH")
+day1points <- c(25, 23, 30, 41, 26, 20)
+day2points <- c(24, 25, 33, 45, 26, 23)
+nba <- tibble(player, team, day1points, day2points)
+head(nba)
+```
+atividade 2:
+```{r}
+nba_melted <- melt(nba, id.vars = c("player", "team"), variable.name = "day", value.name = "points")
+head(nba_melted)
+```
+```{r}
+nba_gather <- gather(nba, key = day, value = points, c(day1points, day2points))
+head(nba_gather)
+```
+```{r}
+nba_long <- pivot_longer(nba, cols = 3:4, names_to = "day", values_to = "points")
+head(nba_long)
+```
+
+

@@ -1,0 +1,24 @@
+---
+title: "atividade 1"
+author: "Rafael"
+date: "2025-08-07"
+output: html_document
+---
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+unzip("//smb/ra238719/Downloads/archive.zip", exdir = "//smb/ra238719/Downloads")
+dados <- read_csv("//smb/ra238719/Downloads/flights.csv")
+```
+```{r}
+library(readr)
+dados_base <- read.csv("//smb/ra238719/Downloads/flights.csv", stringsAsFactors = FALSE)
+```
+
+```{python}
+import pandas as pd
+
+df = pd.read_csv("//smb/ra238719/Downloads/flights.csv")
+```
+

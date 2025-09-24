@@ -1,0 +1,79 @@
+---
+title: "atividade 8"
+author: "Rafael"
+date: "2024-05-02"
+output: html_document
+---
+
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("dslabs")
+library(dslabs)
+```
+
+```{r}
+data("murders")
+glimpse(murders)
+```
+```{r}
+str(murders)
+```
+questão 1:
+```{r}
+murders <- murders %>% mutate(rate = total/ population)
+glimpse(murders)
+```
+questão 2:
+```{r}
+new_table <- select(murders, state, region, rate)
+high_rates <- filter(new_table, rate > 0.6)
+slice_min(high_rates, rate, n = 5)
+```
+
+questão 3:
+```{r}
+murders %>%
+  select(state, region, rate) %>%
+  filter(rate > 0.6) %>%
+  slice_min(rate, n = 5)
+
+```
+questão 4:
+```{r}
+murders <- murders %>% mutate(rank = rank(-rate))
+murders %>% arrange(rank)
+```
+
+questão 5:
+```{r}
+murder.by.region <- murders %>%
+  group_by(region) %>%
+  summarise(media = mean(rate), desvio_padrao = sd(rate))
+
+murder.by.region
+```
+
+questão 6:
+```{r}
+murder.by.region %>% arrange(desc(media))
+
+```
+questão 7:
+```{r}
+murders %>%
+  filter(region == 'south') %>%
+  filter(rate < mean(rate)) %>%
+  summarise(count = n())
+```
+questão 8:
+```{r}
+murders %>%
+  select(state, region, rate) %>%
+  group_by(region) %>%
+  mutate(mean_rate = mean(rate), rate_lower = rate < mean_rate) %>%
+  summarise(low_rate = sum(rate_lower)), n = n(), prop_low_rate = mean(rate_lower)) %>%
+  arrange(prop_low_rate)
+
+```

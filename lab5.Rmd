@@ -1,0 +1,54 @@
+---
+title: "lab5"
+author: "Rafael"
+date: "2024-04-09"
+output: html_document
+---
+
+```{r setup, echo=FALSE}
+data("cars")
+head(cars)
+```
+#iformações 
+O conjunto de dados `cars` disponível no R consiste em 50 observações e 2 colunas.
+
+As colunas neste conjunto de dados são:
+
+1. `speed`: velocidade do carro em milhas por hora.
+2. `dist`: distância necessária para parar o carro em pés.
+```{r setup, echo=FALSE}
+library(knitr)
+```
+#usando kable
+```{r, echo=FALSE}
+kable(head(cars), caption = "primeiras 6 linhas")
+```
+#usando "summary"
+```{r, echo=FALSE}
+summary(cars)
+```
+```{r, fig.height=6, fig.width=8, fig.cap="Gráfico de Dispersão: Distância vs Velocidade", echo=FALSE}
+plot(cars$dist, cars$speed, 
+     xlab = "Distância", ylab = "Velocidade", 
+     main = "Gráfico de Dispersão: Distância vs Velocidade")
+```
+#data frame
+```{r, echo=FALSE}
+carros <- cars
+carros$speed2 <- cars$speed^2
+carros$log <- log(cars$dist)
+carros$sqr <- sqrt(cars$dist)
+carros
+```
+#função apply
+```{r, echo=FALSE}
+função <- apply(carros, 1, sum)
+função
+```
+
+#resultado
+```{r, echo=FALSE}
+media.speed = mean(cars$speed)
+sd.speed = sd(cars$speed)
+```
+
