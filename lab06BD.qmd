@@ -1,0 +1,183 @@
+---
+title: "lab06BD"
+author: "238719"
+format: html
+editor: visual
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+path <- "C:/Users/crist/Documents"
+fname <- file.path(path, "/disco.db")
+library(dplyr)
+library(DBI)
+library(RSQLite)
+
+# Caminho do banco
+fname <- "disco.db"
+conn <- dbConnect(SQLite(), dbname = fname)
+
+# Criar tbls do banco
+customers_tbl <- tbl(conn, "customers")
+invoices_tbl  <- tbl(conn, "invoices")
+invoice_items_tbl <- tbl(conn, "invoice_items")
+tracks_tbl <- tbl(conn, "tracks")
+albums_tbl <- tbl(conn, "albums")
+artists_tbl <- tbl(conn, "artists")
+```
+
+tabelas existentes no banco de dados.
+```{r}
+dbListTables(conn)
+```
+nomes de todas as colunas existentes na tabela customers
+```{r}
+library(dplyr)
+
+# Conectar a tabela
+customers <- tbl(conn, "customers")
+
+# Mostrar colunas
+colnames(customers)
+```
+clientes atualmente cadastrados neste banco de dados.
+```{r}
+dbGetQuery(conn, "SELECT COUNT(*) AS n_clientes FROM customers;")
+```
+
+número de países diferentes em que moram os clientes encontrados
+```{r}
+dbGetQuery(conn, "SELECT COUNT(DISTINCT country) AS n_paises FROM customers;")
+```
+quantos clientes existem por país.
+```{r}
+dbGetQuery(conn, "
+  SELECT country, COUNT(*) AS n_clientes
+  FROM customers
+  GROUP BY country
+  ORDER BY n_clientes DESC;
+")
+```
+os 5 países com mais clientes registrados
+
+```{r}
+dbGetQuery(conn, "
+  SELECT country, COUNT(*) AS n_clientes
+  FROM customers
+  GROUP BY country
+  ORDER BY n_clientes DESC
+  LIMIT 5;
+")
+```
+os países registrados que possuem apenas 6 letras no nome
+```{r}
+dbGetQuery(conn, "
+  SELECT DISTINCT country
+  FROM customers
+  WHERE country GLOB '??????';
+")
+```
+músicas compradas por clientes brasileiros
+```{r}
+dbGetQuery(conn, "
+  SELECT DISTINCT t.Name AS Musica
+  FROM customers c
+  INNER JOIN invoices i ON c.CustomerId = i.CustomerId
+  INNER JOIN invoice_items ii ON i.InvoiceId = ii.InvoiceId
+  INNER JOIN tracks t ON ii.TrackId = t.TrackId
+  WHERE c.Country = 'Brazil';
+")
+```
+
+álbum mais tocado por pais
+
+```{r}
+library(dplyr)
+
+albums_contagem <- customers_tbl %>%
+  inner_join(invoices_tbl, by = "CustomerId") %>%
+  inner_join(invoice_items_tbl, by = "InvoiceId") %>%
+  inner_join(tracks_tbl, by = "TrackId") %>%
+  inner_join(albums_tbl, by = "AlbumId") %>%
+  group_by(Country, Title) %>%
+  summarise(n_vendas = n(), .groups = "drop") %>%
+  collect()  # traz todos os dados para o R
+
+# Álbum mais tocado por país
+albums_mais_tocados <- albums_contagem %>%
+  group_by(Country) %>%
+  filter(n_vendas == max(n_vendas)) %>%  # pega os álbuns com mais vendas
+  slice_min(Title, n = 1) %>%           # desempata pelo título
+  ungroup() %>%
+  arrange(Country) %>%
+  collect()  # garante que é um data.frame local
+
+# Visualizar a tabela completa no R
+View(albums_mais_tocados)  # abre em uma aba do RStudio
+# ou apenas imprimir
+albums_mais_tocados
+```
+artista mais tocado por pais
+```{r}
+library(dplyr)
+library(DBI)
+library(RSQLite)
+
+# Supondo que você já tenha a conexão:
+# conn <- dbConnect(SQLite(), dbname = fname)
+
+# Tabelas
+customers_tbl <- tbl(conn, "customers")
+invoices_tbl <- tbl(conn, "invoices")
+invoice_items_tbl <- tbl(conn, "invoice_items")
+tracks_tbl <- tbl(conn, "tracks")
+albums_tbl <- tbl(conn, "albums")
+artists_tbl <- tbl(conn, "artists")
+
+# Contagem de vendas por país e artista
+artists_contagem <- customers_tbl %>%
+  inner_join(invoices_tbl, by = "CustomerId") %>%
+  inner_join(invoice_items_tbl, by = "InvoiceId") %>%
+  inner_join(tracks_tbl, by = "TrackId") %>%
+  inner_join(albums_tbl, by = "AlbumId") %>%
+  inner_join(artists_tbl, by = "ArtistId") %>%
+  rename(ArtistName = `Name.y`) %>%   # renomeando a coluna do artista
+  group_by(Country, ArtistName) %>%
+  summarise(n_vendas = n(), .groups = "drop") %>%
+  collect()  # traz os dados para o R
+
+# Artista mais tocado por país (uma linha por país)
+artists_mais_tocados <- artists_contagem %>%
+  group_by(Country) %>%
+  filter(n_vendas == max(n_vendas)) %>%  # pega o(s) artista(s) mais vendidos
+  slice_min(ArtistName, n = 1) %>%       # desempata pelo nome do artista
+  ungroup() %>%
+  arrange(Country)
+
+# Visualização
+View(artists_mais_tocados)  # abre em uma aba do RStudio
+# ou apenas imprimir
+artists_mais_tocados
+```
+
+```{r}
+library(gt)
+
+# Álbum mais tocado por país
+albums_mais_tocados %>%
+  gt() %>%
+  tab_header(
+    title = "Álbum mais tocado por país"
+  )
+
+# Artista mais tocado por país
+artists_mais_tocados %>%
+  gt() %>%
+  tab_header(
+    title = "Artista mais tocado por país"
+  )
+```
+

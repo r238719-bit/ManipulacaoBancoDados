@@ -1,0 +1,43 @@
+---
+title: "desafio 5"
+author: "238719"
+format: html
+editor: visual
+---
+
+```{r}
+library(RSQLite)
+db = dbConnect(SQLite(),
+'../dados/disco.db')
+db
+```
+
+```{r}
+dbListFields(db, 'albums')
+```
+
+```{r}
+album_db = dbGetQuery(db, 'SELECT = FROM albums')
+head(album_db)
+```
+
+```{r}
+dim(album_db)
+```
+
+```{r}
+sql = 'SELECT trackid, name, composer, unitprice FROM tracks ORDER BY unitprice'
+res = dbGetQuery(db, sql)
+head(res)
+```
+
+```{r}
+sql = 'SELECT city FROM customers ORDER BY city'
+ex3a = dbGetQuery(db, sql)
+head(ex3a)
+```
+
+```{r}
+dim(ex3a)
+```
+

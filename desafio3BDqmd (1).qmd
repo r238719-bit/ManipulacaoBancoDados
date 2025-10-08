@@ -1,0 +1,78 @@
+---
+title: "desafio3BD: Titanic passengers"
+author: "Rafael Ruivo de Almeida 238719"
+format: pdf
+editor: visual
+execute:
+  echo: false  
+  warning: false
+  message: false
+header-includes:
+  - \usepackage{caption}
+  - \usepackage{array}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{geometry}
+  - \geometry{a4paper, margin=1in}
+  - \captionsetup[table]{justification=centering, singlelinecheck=false}
+---
+
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+# Instalar pacotes se necessário
+if (!require(arrow)) install.packages("arrow")
+if (!require(ndjson)) install.packages("ndjson")
+
+library(arrow)
+library(ndjson)
+```
+
+O dataset Titanic passengers contém informações sobre os passageiros do RMS Titanic, o famoso navio que naufragou em 1912. É amplamente usado em análises de dados e aprendizado de máquina para estudar sobrevivência, perfil dos passageiros e diferenças de risco entre grupos.
+
+O conjunto de dados inclui informações pessoais, sociais e de viagem de cada passageiro
+
+```{r}
+# Carregar dados e selecionar apenas as primeiras 7 colunas
+df_parquet <- read_parquet("C:/Users/crist/Downloads/titanic.parquet")
+df_parquet <- df_parquet[, 1:7]  # Seleciona apenas as primeiras 7 colunas
+
+df_json <- stream_in("C:/Users/crist/Downloads/titanic-parquet.json")
+df_json <- as.data.frame(df_json)
+df_json <- df_json[, 1:7]  # Seleciona apenas as primeiras 7 colunas
+```
+
+Table 1: Este data frame contém os dados dos passageiros do Titanic carregados a partir de um arquivo Parquet. O Parquet é um formato eficiente para armazenamento e leitura de grandes volumes de dados, organizado em colunas, o que facilita análises rápidas. O conteúdo representa cada passageiro com variáveis pessoais, sociais e de viagem, incluindo a informação de sobrevivência.
+
+```{r}
+kable(head(df_parquet, 40), 
+      format = "latex", 
+      caption = "Arquivo Parquet",
+      booktabs = TRUE,
+      longtable = TRUE,
+      align = "l") %>%
+  kable_styling(latex_options = c("hold_position", "repeat_header"),
+                position = "center",
+                full_width = FALSE,
+                font_size = 8)  # Reduz tamanho da fonte
+```
+
+table 2: Este data frame contém os dados dos passageiros do Titanic carregados a partir de um arquivo JSON. O JSON é um formato de texto, fácil de ler e compartilhar, que armazena cada passageiro como um objeto com campos como nome, idade, sexo, classe e sobrevivência. Apesar de não ser otimizado para grandes volumes, preserva a estrutura completa dos dados e é compatível com diversas linguagens e sistemas.
+
+```{r}
+kable(head(df_json, 40), 
+      format = "latex", 
+      caption = "Arquivo JSON",
+      booktabs = TRUE,
+      longtable = TRUE,
+      align = "l") %>%
+  kable_styling(latex_options = c("hold_position", "repeat_header"),
+                position = "center",
+                full_width = FALSE,
+                font_size = 8)  # Reduz tamanho da fonte
+```
