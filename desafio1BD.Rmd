@@ -1,0 +1,41 @@
+---
+title: "dasafio1BD"
+author: "Rafael"
+date: "2025-10-16"
+output: html_document
+---
+read.csv
+```{r, message=FALSE, warning=FALSE}
+# medir o tempo de execução
+inicio <- Sys.time()
+dados_base <- read.csv("flights.csv")
+fim <- Sys.time()
+
+tempo_base <- fim - inicio
+tempo_base
+```
+read_csv
+```{r, message=FALSE, warning=FALSE}
+library(readr)
+
+inicio <- Sys.time()
+dados_readr <- read_csv("flights.csv")
+fim <- Sys.time()
+
+tempo_readr <- fim - inicio
+tempo_readr
+```
+read_csv
+```{python, message=FALSE, warning=FALSE}
+import pandas as pd
+import time
+import os
+file_path = 'flights.csv'
+# Verifique o tempo ANTES de ler o arquivo
+start_time = time.time()
+df_flights = pd.read_csv(file_path)
+end_time = time.time()
+execution_time = end_time - start_time
+execution_time
+```
+
