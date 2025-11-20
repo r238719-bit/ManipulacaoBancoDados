@@ -1,0 +1,46 @@
+---
+title: "atividade15BD"
+author: '238719'
+date: "2025-11-20"
+output: html_document
+---
+
+
+```{r setup, message=FALSE}
+Sys.setenv(R_HOME = "C:/Program Files/R/R-4.4.3")
+library(JuliaCall)
+
+julia_setup(JULIA_HOME = "C:/Users/crist/AppData/Local/Programs/Julia-1.12.1")
+```
+
+
+```
+Loop Paralelo em Julia
+```{julia}
+using LinearAlgebra
+using Statistics
+using Base.Threads
+
+function trabalho_pesado(x)
+    s = 0.0
+    for i = 1:10^6
+        s += sqrt(i) * sin(i)
+    end
+    return s
+end
+
+println("Número de threads: ", nthreads())
+
+# --- LOOP EM SÉRIE ---
+@time resultados_serie = [trabalho_pesado(i) for i in 1:4];
+
+# --- LOOP EM PARALELO (threads) ---
+resultados_thread = Vector{Float64}(undef, 4)
+
+@time begin
+    @threads for i in 1:4
+        resultados_thread[i] = trabalho_pesado(i)
+    end
+end
+```
+
