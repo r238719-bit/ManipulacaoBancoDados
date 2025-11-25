@@ -2,8 +2,10 @@
 title: "SQLite com Julia - Trabalho Acadêmico"
 subtitle: "Manipulação de Banco de Dados"
 author: "Rafael Ruivo, Lucca de Luca"
-format: 
+format:
   revealjs:
+    self-contained: true
+    embed-resources: true
     theme: dark
     slide-number: true
     code-copy: true
